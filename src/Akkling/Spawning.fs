@@ -70,7 +70,7 @@ module Spawn =
     /// Wraps provided function with actor behavior. 
     /// It will be invoked each time, an actor will receive a message. 
     /// </summary>
-    let actorOf (fn : 'Message -> #Effect<'Message>) (mailbox : Actor<'Message>) : Effect<'Message> = 
+    let actorOf (fn : 'Message -> #Effect<'Message>) (mailbox : Actor<'Message>) = //: Effect<'Message> = 
         let rec loop() = 
             actor { 
                 let! msg = mailbox.Receive()
@@ -82,7 +82,7 @@ module Spawn =
     /// Wraps provided function with actor behavior. 
     /// It will be invoked each time, an actor will receive a message. 
     /// </summary>
-    let actorOf2 (fn : Actor<'Message> -> 'Message -> #Effect<'Message>) (mailbox : Actor<'Message>) : Effect<'Message> = 
+    let actorOf2 (fn : Actor<'Message> -> 'Message -> #Effect<'Message>) (mailbox : Actor<'Message>) = //: Effect<'Message> = 
         let rec loop() = 
             actor {
                 let! msg = mailbox.Receive()
