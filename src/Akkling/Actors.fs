@@ -175,6 +175,12 @@ and [<Struct>]AsyncEffect<'Message>(asyncEffect: Async<Effect<'Message>>) =
         member __.WasHandled () = true
         member __.OnApplied(_ : ExtActor<'Message>, _: 'Message) = ()    
 
+and [<Struct>]ResultEffect<'Message, 'T> (value:'T) =
+    member __.Value = value
+    interface Effect<'Message> with
+        member __.WasHandled () = false
+        member __.OnApplied(_ : ExtActor<'Message>, _: 'Message) = ()
+
 and ActorEffect<'Message> = 
     | Unhandled
     | Stop

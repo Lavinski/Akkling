@@ -18,18 +18,32 @@ open System
 
 /// The builder for actor computation expression.
 type ActorBuilder() =
-    member __.Bind(_ : IO<'In>, continuation : 'In -> Effect<'In>) : Effect<'Message> = upcast Become(fun message -> continuation message)
+    member __.Bind(_ : IO<'In>, continuation : 'In -> Effect<'In>) : Effect<'Message> =
+        upcast Become(fun message -> continuation message)
+
     member this.Bind(behavior : Effect<'In>, continuation : Effect<'In> -> Effect<'In>) : Effect<'In> = 
         match behavior with
         | :? Become<'In> as become -> Become<'In>(fun message -> this.Bind(become.Next message, continuation)) :> Effect<'In>
-        | returned -> continuation returned    
+        | returned -> continuation returned
+
     member __.Bind(asyncInput: Async<'In>, continuation: 'In -> Effect<'Out>) : Effect<'Out> =
         upcast AsyncEffect (async {
             let! returned = asyncInput 
             return continuation returned 
         })
+
+    member this.Bind(result : ResultEffect<'In, 'Value>, continuation : 'Value -> Effect<'In>) : Effect<'In> = 
+        //upcast Become<'In>(fun message -> 
+            continuation (result.Value)
+        //)
+    
+    
     member __.ReturnFrom (effect: Effect<'Message>) = effect
+    //member __.ReturnFrom (effect: ResultEffect<'Message, 'T>) = effect.Value
+
     member __.Return (value: Effect<'Message>) : Effect<'Message> = value
+    member __.Return (effect: ResultEffect<'Message, 'T>) = effect
+
     member __.Zero () : Effect<'Message> = Ignore :> Effect<'Message>
     member __.Yield value = value
 
@@ -79,10 +93,12 @@ type ActorBuilder() =
             else Ignore :> Effect<'In>
         loop()
     
-    member __.Delay(continuation : unit -> Effect<'In>) = continuation
-    member __.Run(continuation : unit -> Effect<'In>) = continuation ()
-    member __.Run(continuation : Effect<'In>) = continuation
-    
+    member __.Delay(continuation : unit -> #Effect<'In>) = continuation
+    member __.Run(continuation : unit -> #Effect<'In>) = continuation ()
+    member __.Run(continuation : #Effect<'In>) = continuation
+
+    //member __.Run(continuation : ResultEffect<'In, 'T>) = continuation
+
     member this.Combine(first : unit -> Effect<'In>, second : unit -> Effect<'In>) : Effect<'In> = 
         match first () with
         | Become next -> Become(fun message -> this.Combine((fun () -> next message), second)) :> Effect<'In>
